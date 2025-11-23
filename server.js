@@ -159,7 +159,25 @@ app.get('/api/tools', (req, res) => {
     });
 });
 
-app.post('/api/tools', (req, res) => {
+const authMiddleware = (req, res, next) => {
+    const password = req.headers['x-admin-password'];
+    if (password === '84679512') {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+};
+
+app.post('/api/login', (req, res) => {
+    const { password } = req.body;
+    if (password === '84679512') {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+});
+
+app.post('/api/tools', authMiddleware, (req, res) => {
     const { category, titre, site, author, description, emoji } = req.body;
     const sql = "INSERT INTO tools (category, titre, site, author, description, emoji) VALUES (?, ?, ?, ?, ?, ?)";
     const params = [category, titre, site, author, description, emoji];
@@ -176,7 +194,7 @@ app.post('/api/tools', (req, res) => {
     });
 });
 
-app.delete('/api/tools/:id', (req, res) => {
+app.delete('/api/tools/:id', authMiddleware, (req, res) => {
     const sql = "DELETE FROM tools WHERE id = ?";
     const params = [req.params.id];
     db.run(sql, params, function (err) {
