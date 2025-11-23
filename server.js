@@ -161,7 +161,8 @@ app.get('/api/tools', (req, res) => {
 
 const authMiddleware = (req, res, next) => {
     const password = req.headers['x-admin-password'];
-    if (password === '84679512') {
+    const adminPassword = process.env.ADMIN_PASSWORD || '84679512';
+    if (password === adminPassword) {
         next();
     } else {
         res.status(401).json({ error: 'Unauthorized' });
@@ -170,7 +171,8 @@ const authMiddleware = (req, res, next) => {
 
 app.post('/api/login', (req, res) => {
     const { password } = req.body;
-    if (password === '84679512') {
+    const adminPassword = process.env.ADMIN_PASSWORD || '84679512';
+    if (password === adminPassword) {
         res.json({ success: true });
     } else {
         res.status(401).json({ error: 'Unauthorized' });

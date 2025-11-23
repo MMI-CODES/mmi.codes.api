@@ -19,5 +19,8 @@ EXPOSE 3000
 # Volume pour la persistance des données
 VOLUME ["/app/data"]
 
+# Variable d'environnement pour le mot de passe (valeur par défaut)
+ENV ADMIN_PASSWORD=84679512
+
 # Commande de démarrage
 CMD ["npm", "start"]
