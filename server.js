@@ -125,6 +125,19 @@ function initDb() {
                 console.log("Database seeded.");
             }
         });
+
+        db.run(`CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,
+            titre TEXT NOT NULL,
+            content TEXT,
+            author TEXT,
+            link TEXT,
+            image TEXT,
+            date TEXT,
+            location TEXT,
+            expires TEXT
+        )`);
     });
 }
 
@@ -159,6 +172,42 @@ app.get('/api/tools', (req, res) => {
     });
 });
 
+app.get('/api/messages', (req, res) => {
+    const sql = "SELECT * FROM messages";
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        
+        const response = {
+            messages: [],
+            images: []
+        };
+
+        rows.forEach(row => {
+            if (response[row.type + 's']) {
+                response[row.type + 's'].push({
+                    id: row.id,
+                    type: row.type,
+                    titre: row.titre,
+                    content: row.content,
+                    author: row.author,
+                    link: row.link,
+                    image: row.image,
+                    date: row.date,
+                    location: row.location,
+                    expires: row.expires
+                });
+            }
+        });
+
+        res.json(response);
+    });
+});
+
+
+
 const authMiddleware = (req, res, next) => {
     const password = req.headers['x-admin-password'];
     const adminPassword = process.env.ADMIN_PASSWORD || '84679512';
@@ -178,6 +227,8 @@ app.post('/api/login', (req, res) => {
         res.status(401).json({ error: 'Unauthorized' });
     }
 });
+
+
 
 app.post('/api/tools', authMiddleware, (req, res) => {
     const { category, titre, site, author, description, emoji } = req.body;
@@ -207,6 +258,38 @@ app.delete('/api/tools/:id', authMiddleware, (req, res) => {
         res.json({ "message": "deleted", changes: this.changes });
     });
 });
+
+
+
+app.post('/api/messages', authMiddleware, (req, res) => {
+    const { type, titre, content, author, link, image, date, location, expires } = req.body;
+    const sql = "INSERT INTO messages (type, titre, content, author, link, image, date, location, expires) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    const params = [type, titre, content, author, link, image, date, location, expires];
+    db.run(sql, params, function (err) {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        res.json({
+            "message": "success",
+            "data": req.body,
+            "id": this.lastID
+        });
+    });
+});
+
+app.delete('/api/messages/:id', authMiddleware, (req, res) => {
+    const sql = "DELETE FROM messages WHERE id = ?";
+    const params = [req.params.id];
+    db.run(sql, params, function (err) {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        res.json({ "message": "deleted", changes: this.changes });
+    });
+});
+
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
